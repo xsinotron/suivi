@@ -1,0 +1,33 @@
+SUIVI DE TÂCHES - installation locale avec Apache (Ubuntu)
+
+Application 100 % statique : un seul fichier index.html, aucune base de données
+à installer. Les tâches sont enregistrées dans le navigateur (localStorage).
+
+1) Installer Apache (si besoin)
+   sudo apt update && sudo apt install apache2
+
+2) Copier l'application
+   sudo unzip suivi-taches.zip -d /var/www/html/
+   sudo chown -R www-data:www-data /var/www/html/suivi-taches
+
+3) Ouvrir dans le navigateur
+   http://localhost/suivi-taches/
+
+Notes
+- Les données sont propres à chaque navigateur ET à chaque adresse :
+  http://localhost/ et http://127.0.0.1/ ont des données séparées.
+  Garde toujours la même adresse.
+- Vider les données de navigation efface les tâches.
+- La police Atkinson Hyperlegible se charge depuis Google Fonts ; hors ligne,
+  la police système s'affiche à la place (rien ne casse).
+- Sans Apache, on peut aussi ouvrir index.html directement dans le navigateur.
+
+Fonctions
+- Imprimer (A4) : ouvre la boîte d'impression avec une mise en page papier
+  (liste des tâches + rétroplanning, en noir et blanc lisible). Raccourci : Ctrl+P.
+- Exporter : télécharge toutes les tâches dans un fichier .json (sauvegarde).
+- Importer : charge un fichier exporté ; les tâches sont fusionnées avec
+  celles déjà présentes (rien n'est supprimé).
+- Modifier : le crayon (✎) à droite d'une tâche ou sous-tâche recharge ses
+  informations dans le formulaire (titre, dates, tâche parente).
+  Clique sur « Enregistrer » pour valider ou « Annuler la modification ».

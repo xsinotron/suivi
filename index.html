@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon suivi de tâches</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F5F7;--surf:#fff;--ink:#1F2A37;--mute:#5F6B7A;--line:#D8DEE5;--acc:#2F6F8F;--ok:#3E9B6B;--warn:#C9822B;--bar:#C3D9E5;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151B22;--surf:#1D252E;--ink:#E8EDF2;--mute:#9AA7B5;--line:#2F3A46;--acc:#6FB1D1;--ok:#5CC08B;--warn:#E3A252;--bar:#35566A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151B22;--surf:#1D252E;--ink:#E8EDF2;--mute:#9AA7B5;--line:#2F3A46;--acc:#6FB1D1;--ok:#5CC08B;--warn:#E3A252;--bar:#35566A;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 'Atkinson Hyperlegible',system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 56px;display:grid;gap:20px}
+h1{font-size:1.5rem;margin:0}h2{font-size:1.25rem;margin:2px 0}h3{font-size:1.05rem;margin:0 0 8px}
+p{margin:0}.mute{color:var(--mute);font-size:.92rem}
+.box{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:16px}
+#focus{border-left:6px solid var(--acc)}#focus .ok{color:var(--ok);font-weight:700;margin-bottom:6px}
+form{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+form .w{grid-column:1/-1}
+label.f{display:grid;gap:4px;font-size:.92rem;color:var(--mute)}
+input[type=text],input[type=date],select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;min-width:0}
+button{font:inherit;cursor:pointer}
+.go{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:11px 16px;font-weight:700}
+:is(button,input,select):focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.card+.card{margin-top:12px}
+.card header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.x{background:none;border:0;color:var(--mute);font-size:1.4rem;padding:2px 10px;border-radius:8px}
+.x:hover{color:var(--warn)}
+.pg{height:12px;background:var(--bar);border-radius:6px;overflow:hidden;margin:10px 0 4px}
+.pg div{height:100%;background:var(--ok);border-radius:6px;transition:width .3s}
+.row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.row .ti{flex:1}.done .ti{text-decoration:line-through;color:var(--mute)}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--ok);flex:none}
+.late{color:var(--warn);font-weight:700}
+#gantt{display:flex}
+#gl{flex:none;width:150px}
+#gl div{height:32px;line-height:32px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.92rem}
+#gl .k{padding-left:14px;color:var(--mute)}
+#gs{overflow-x:auto;flex:1;min-width:0}
+main>*{min-width:0}
+@media(max-width:520px){form{grid-template-columns:1fr}#gl{width:100px}}
+@media(prefers-reduced-motion:reduce){.pg div{transition:none}}
+.sec{background:var(--surf);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 14px}
+.bl{visibility:hidden}.pr{display:none}
+@page{size:A4;margin:14mm}
+@media print{
+:root:not(#x){--bg:#fff;--surf:#fff;--ink:#000;--mute:#444;--line:#999;--acc:#1d5570;--ok:#2f7d54;--warn:#a8650f;--bar:#d6e3ea;color-scheme:light}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-size:12pt}
+#focus,#addbox,#tools,.x,#gl{display:none!important}
+main{max-width:none;padding:0;gap:12px}
+.box{border-color:#999}
+.card,#gbox{break-inside:avoid}
+#gs{overflow:visible}#gs svg{width:100%;height:auto}
+.bl{visibility:visible}
+.pr{display:block;color:#444}
+}
+</style></head>
+<body><main>
+<h1>Mon suivi de tâches</h1>
+<p class="pr"></p>
+<div id="tools" style="display:flex;gap:8px;flex-wrap:wrap"><button class="sec" id="prt">Imprimer (A4)</button><button class="sec" id="exp">Exporter</button><button class="sec" id="imp">Importer</button><input type="file" id="file" accept="application/json,.json" hidden></div>
+<section id="focus" class="box" aria-live="polite"></section>
+<section id="addbox" class="box"><h3>Ajouter une tâche</h3>
+<form id="f">
+<label class="f w">Titre<input type="text" id="t" required maxlength="80"></label>
+<label class="f w">Sous-tâche de<select id="p"></select></label>
+<label class="f">Début<input type="date" id="s" required></label>
+<label class="f">Échéance<input type="date" id="e" required></label>
+<button class="go w" type="submit">Ajouter</button><button class="sec w" type="button" id="cx" hidden>Annuler la modification</button></form></section>
+<section id="list"></section>
+<section id="gbox" class="box"><h3>Rétroplanning</h3><div id="gantt"><div id="gl"></div><div id="gs"></div></div></section>
+</main>
+<script>
+const K='suivi-taches-v1',$=i=>document.getElementById(i),p2=n=>String(n).padStart(2,'0');
+const isoL=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+const dn=s=>Math.round(Date.parse(s+'T00:00:00Z')/864e5),ds=n=>new Date(n*864e5).toISOString().slice(0,10);
+const td=isoL(new Date()),tn=dn(td),add=n=>ds(tn+n);
+const fr=s=>new Date(s+'T00:00:00Z').toLocaleDateString('fr-FR',{day:'numeric',month:'short',timeZone:'UTC'});
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let T=null,msg='',editId='';
+try{T=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!Array.isArray(T)){T=[
+{id:'a',t:'Projet exemple',p:'',s:add(-2),e:add(10),done:false},
+{id:'b',t:'Premier jet',p:'a',s:add(-2),e:add(2),done:true},
+{id:'c',t:'Relecture',p:'a',s:add(3),e:add(6),done:false},
+{id:'d',t:'Envoi',p:'a',s:add(7),e:add(10),done:false}]}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(T))}catch(e){}};
+const kids=id=>T.filter(t=>t.p===id);
+const pct=t=>{const k=kids(t.id);return k.length?Math.round(100*k.filter(c=>c.done).length/k.length):t.done?100:0};
+const chk=t=>`<input type="checkbox" data-t="${t.id}" ${t.done?'checked':''} aria-label="Terminé : ${esc(t.t)}">`;
+const when=t=>`<span class="mute${t.e<td&&!t.done?' late':''}">${fr(t.s)} → ${fr(t.e)}</span>`;
+
+function render(){
+ const leaves=T.filter(t=>!t.done&&!kids(t.id).length).sort((a,b)=>a.e.localeCompare(b.e)),n=leaves[0];
+ $('focus').innerHTML=(msg?`<p class="ok">${msg}</p>`:'')+(n?`<p class="mute">Prochaine étape</p><h2>${esc(n.t)}</h2><p class="mute${n.e<td?' late':''}">${n.e<td?'En retard, prévu':'À finir'} pour le ${fr(n.e)}</p>`:'<h2>Tout est fait. Souffle un coup.</h2>');
+ msg='';
+ const R=T.filter(t=>!t.p);
+ $('p').innerHTML='<option value="">Aucune (tâche principale)</option>'+R.map(r=>`<option value="${r.id}">${esc(r.t)}</option>`).join('');
+ $('list').innerHTML=R.length?R.map(r=>{const k=kids(r.id),pc=pct(r);
+  return `<article class="box card"><header><label class="${r.done&&!k.length?'done':''}" style="display:flex;gap:10px;align-items:center">${k.length?'':chk(r)}<h3 style="margin:0" class="ti">${esc(r.t)}</h3></label><span style="white-space:nowrap"><button class="x" data-edit="${r.id}" aria-label="Modifier ${esc(r.t)}">✎</button><button class="x" data-del="${r.id}" aria-label="Supprimer ${esc(r.t)}">×</button></span></header>`+
+  `<div class="pg" role="progressbar" aria-valuenow="${pc}" aria-valuemin="0" aria-valuemax="100"><div style="width:${pc}%"></div></div>`+
+  `<p class="mute">${pc} %${k.length?` · ${k.filter(c=>c.done).length} sur ${k.length} sous-tâches`:''} · ${when(r)}</p>`+
+  k.map(c=>`<div class="row ${c.done?'done':''}">${chk(c)}<span class="ti">${esc(c.t)}</span>${when(c)}<button class="x" data-edit="${c.id}" aria-label="Modifier ${esc(c.t)}">✎</button><button class="x" data-del="${c.id}" aria-label="Supprimer ${esc(c.t)}">×</button></div>`).join('')+`</article>`}).join(''):'<p class="mute">Aucune tâche. Ajoute la première ci-dessus.</p>';
+ gantt(R)}
+
+function gantt(R){
+ const rows=R.flatMap(r=>[r,...kids(r.id)]);
+ if(!rows.length){$('gl').innerHTML='';$('gs').innerHTML='<p class="mute">Le planning apparaît dès la première tâche.</p>';return}
+ const dw=28,rh=32,H=28;
+ const min=Math.min(tn,...rows.map(r=>dn(r.s)))-1,max=Math.max(tn,...rows.map(r=>dn(r.e)))+2,N=max-min+1,W=N*dw;
+ let g='';
+ for(let i=0;i<N;i++){if(new Date((min+i)*864e5).getUTCDay()===1){const x=i*dw;
+  g+=`<line x1="${x}" x2="${x}" y1="0" y2="${H+rows.length*rh}" style="stroke:var(--line)"/><text x="${x+4}" y="18" font-size="12" style="fill:var(--mute)">${fr(ds(min+i))}</text>`}}
+ rows.forEach((r,i)=>{const s=dn(r.s)-min,w=(dn(r.e)-dn(r.s)+1)*dw,pc=pct(r),y=H+i*rh+6,late=r.e<td&&pc<100;
+  g+=`<rect x="${s*dw}" y="${y}" width="${w}" height="${rh-12}" rx="6" style="fill:var(--bar)${late?';stroke:var(--warn);stroke-width:2':''}"/>`+
+  `<rect x="${s*dw}" y="${y}" width="${w*pc/100}" height="${rh-12}" rx="6" style="fill:${pc===100?'var(--ok)':'var(--acc)'}"/>`+(s*dw>W/2?`<text class="bl" x="${s*dw-6}" y="${y+13}" text-anchor="end" font-size="12" style="fill:var(--ink)">${esc(r.t)}</text>`:`<text class="bl" x="${s*dw+w+6}" y="${y+13}" font-size="12" style="fill:var(--ink)">${esc(r.t)}</text>`)});
+ const tx=(tn-min)*dw+dw/2;
+ g+=`<line x1="${tx}" x2="${tx}" y1="0" y2="${H+rows.length*rh}" stroke-dasharray="4 3" stroke-width="2" style="stroke:var(--warn)"/><text x="${tx+4}" y="${H-4}" font-size="12" font-weight="700" style="fill:var(--warn)">Aujourd'hui</text>`;
+ $('gl').innerHTML=`<div style="height:${H}px"></div>`+rows.map(r=>`<div class="${r.p?'k':''}" title="${esc(r.t)}">${esc(r.t)}</div>`).join('');
+ $('gs').innerHTML=`<svg width="${W}" height="${H+rows.length*rh}" viewBox="0 0 ${W} ${H+rows.length*rh}" role="img" aria-label="Diagramme de Gantt des tâches">${g}</svg>`;
+ $('gs').scrollLeft=Math.max(0,tx-120)}
+
+$('f').addEventListener('submit',e=>{e.preventDefault();
+ let s=$('s').value,en=$('e').value;if(en<s)en=s;
+ const isNew=!editId;if(!$('t').value.trim())return;let t;if(isNew)t={id:uid(),t:$('t').value.trim(),p:$('p').value,s,e:en,done:false};else{t=T.find(x=>x.id===editId);Object.assign(t,{t:$('t').value.trim(),s,e:en});if(!$('p').disabled&&$('p').value!==t.id)t.p=$('p').value;endEdit()}
+ if(isNew)T.push(t);const par=T.find(x=>x.id===t.p);
+ if(par){if(s<par.s)par.s=s;if(en>par.e)par.e=en;par.done=false}
+ $('t').value='';save();render()});
+document.addEventListener('change',e=>{const id=e.target.dataset.t;if(!id)return;
+ const t=T.find(x=>x.id===id);t.done=e.target.checked;
+ if(t.done){msg='Bien joué, une étape de moins.';const par=T.find(x=>x.id===t.p);if(par&&kids(par.id).every(c=>c.done))msg='Tout le bloc « '+esc(par.t)+' » est terminé !'}
+ save();render()});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b)return;
+ const id=b.dataset.del;T=T.filter(t=>t.id!==id&&t.p!==id);save();render()});
+function endEdit(){editId='';$('p').disabled=false;document.querySelector('#f .go').textContent='Ajouter';$('cx').hidden=true;$('addbox').querySelector('h3').textContent='Ajouter une tâche'}
+$('cx').onclick=()=>{endEdit();$('t').value=''};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-edit]');if(!b)return;const t=T.find(x=>x.id===b.dataset.edit);if(!t)return;editId=t.id;$('t').value=t.t;$('s').value=t.s;$('e').value=t.e;$('p').value=t.p;$('p').disabled=!!kids(t.id).length;document.querySelector('#f .go').textContent='Enregistrer';$('cx').hidden=false;$('addbox').querySelector('h3').textContent='Modifier la tâche';$('addbox').scrollIntoView();$('t').focus()});
+$('prt').onclick=()=>window.print();
+addEventListener('beforeprint',()=>{document.querySelector('.pr').textContent='Liste des tâches · imprimée le '+fr(td)+' '+td.slice(0,4)});
+$('exp').onclick=()=>{try{const b=new Blob([JSON.stringify({v:1,tasks:T},null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='suivi-taches-'+td+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}catch(e){}};
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+r.onload=()=>{try{let d=JSON.parse(r.result);d=Array.isArray(d)?d:d.tasks;const re=/^\d{4}-\d\d-\d\d$/;
+const ok=d.filter(x=>x&&typeof x.id==='string'&&typeof x.t==='string'&&re.test(x.s)&&re.test(x.e)).map(x=>({id:x.id,t:x.t.slice(0,80),p:typeof x.p==='string'?x.p:'',s:x.s,e:x.e,done:!!x.done}));
+const ids=new Set(ok.map(x=>x.id));T=T.filter(x=>!ids.has(x.id)).concat(ok);msg=ok.length+' tâche(s) importée(s).';save();render()}catch(err){msg='Fichier non reconnu : choisis un export de cette application.';render()}};
+r.readAsText(f);e.target.value=''};
+$('s').value=td;$('e').value=add(3);render();
+</script></body></html>
